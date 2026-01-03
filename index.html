@@ -71,7 +71,7 @@ input[type=range]{width:220px;}
 <body>
 
 <div class="main" id="main">
-    <input id="wordInput" placeholder="Enter words (comma separated)" onkeydown="if(event.key==='Enter') start()">
+    <input id="wordInput" placeholder="Enter a phrase (e.g. i dont want study)" onkeydown="if(event.key==='Enter') start()">
     <button onclick="start()">Start</button>
 </div>
 
@@ -98,8 +98,9 @@ let interval;
 
 function start(){
     const input=document.getElementById('wordInput').value.trim();
-    if(!input)return;
-    words=input.split(',').map(w=>w.trim());
+    const phrase=(input ? input : "i don't want to study").replace(/\s+/g,' ').trim();
+    words=phrase.split(' ');
+    words.push(phrase);
     document.getElementById('main').style.display='none';
     document.getElementById('controls').classList.remove('hidden');
     document.getElementById('word').classList.remove('hidden');
@@ -117,6 +118,8 @@ function run(){
         const w=document.getElementById('word');
         w.textContent=words[index%words.length];
         w.style.color=text;
+        const rotation=(Math.random()*24)-12; // -12deg to +12deg
+        w.style.transform=`rotate(${rotation}deg)`;
         w.style.animation='glitch 0.15s';
         setTimeout(()=>w.style.animation='',150);
         index++;
