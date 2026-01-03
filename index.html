@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Word Effect Preview FINAL</title>
+<style>
+body{
+    margin:0;
+    height:100vh;
+    width:100vw;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:Arial, sans-serif;
+    overflow:hidden;
+    transition:background 0.4s linear;
+    background-color: black;
+}
+.main{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+input{
+    padding:10px;
+    font-size:18px;
+    background:#222;
+    border:2px solid white;
+    color:white;
+}
+button{
+    padding:10px;
+    font-size:16px;
+    background:#444;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+h1{
+    font-size:72px;
+    text-align:center;
+    transition:color 0.3s linear, text-shadow 0.3s linear, transform 0.1s;
+}
+.hidden{display:none;}
+.controls{
+    position:fixed;
+    bottom:15px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    color:white;
+    font-size:13px;
+}
+input[type=range]{width:220px;}
+.glow{
+    text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+@keyframes glitch{
+    0%{transform:translate(0)}
+    20%{transform:translate(-2px,2px)}
+    40%{transform:translate(2px,-2px)}
+    60%{transform:translate(-1px,1px)}
+    80%{transform:translate(1px,-1px)}
+    100%{transform:translate(0)}
+}
+</style>
+</head>
+<body>
+
+<div class="main" id="main">
+    <input id="wordInput" placeholder="Enter words (comma separated)" onkeydown="if(event.key==='Enter') start()">
+    <button onclick="start()">Start</button>
+</div>
+
+<h1 id="word" class="hidden glow"></h1>
+
+<div class="controls hidden" id="controls">
+    Speed: <span id="speedLabel">500</span> ms
+    <input type="range" min="100" max="2000" step="100" value="500" id="speed" oninput="updateSpeed()">
+    <button onclick="pause()">Pause / Resume</button>
+    <button onclick="fullscreen()">Fullscreen</button>
+    <button onclick="reset()">Reset</button>
+</div>
+
+<audio id="music" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+let words=[];
+let index=0;
+let speed=500;
+let paused=false;
+let interval;
+
+function start(){
+    const input=document.getElementById('wordInput').value.trim();
+    if(!input)return;
+    words=input.split(',').map(w=>w.trim());
+    document.getElementById('main').style.display='none';
+    document.getElementById('controls').classList.remove('hidden');
+    document.getElementById('word').classList.remove('hidden');
+    document.getElementById('music').play();
+    run();
+}
+
+function run(){
+    clearInterval(interval);
+    interval=setInterval(()=>{
+        if(paused)return;
+        const bg=randomColor();
+        document.body.style.background=gradient(bg);
+        const text=invert(bg);
+        const w=document.getElementById('word');
+        w.textContent=words[index%words.length];
+        w.style.color=text;
+        w.style.animation='glitch 0.15s';
+        setTimeout(()=>w.style.animation='',150);
+        index++;
+    },speed);
+}
+
+function updateSpeed(){
+    speed=document.getElementById('speed').value;
+    document.getElementById('speedLabel').textContent=speed;
+    run();
+}
+
+function pause(){paused=!paused;}
+function reset(){location.reload();}
+
+function fullscreen(){
+    if(document.documentElement.requestFullscreen)
+        document.documentElement.requestFullscreen();
+}
+
+function randomColor(){
+    return `rgb(${r()},${r()},${r()})`;
+}
+function invert(rgb){
+    const n=rgb.match(/\d+/g).map(Number);
+    return `rgb(${255-n[0]},${255-n[1]},${255-n[2]})`;
+}
+function gradient(rgb){
+    return `radial-gradient(circle, ${rgb}, black)`;
+}
+function r(){return Math.floor(Math.random()*256);}
+</script>
+
+</body>
+</html>
