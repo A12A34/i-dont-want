@@ -1,423 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Word Effect Preview FINAL</title>
-<style>
-body{
-    margin:0;
-    height:100vh;
-    width:100vw;
-    display:flex;
-    font-family:Arial, sans-serif;
-    overflow:hidden;
-    transition:background 0.4s linear;
-    background-color: black;
-}
-
-.layout{
-    display:flex;
-    width:100%;
-    height:100%;
-}
-
-.sidebar{
-    flex:0 0 clamp(160px, 18vw, 240px);
-    min-width:160px;
-    max-width:320px;
-    padding:16px;
-    box-sizing:border-box;
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-    border-right:1px solid rgba(255,255,255,0.15);
-    background:rgba(0,0,0,0.45);
-    color:white;
-    height:100%;
-    overflow-y:auto;
-}
-
-.sidebar.hidden{display:none;}
-
-.sidebarRight{
-    border-right:none;
-    border-left:1px solid rgba(255,255,255,0.15);
-}
-
-.panel{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.panelTitle{
-    font-size:13px;
-    opacity:0.85;
-    letter-spacing:0.02em;
-}
-
-.effects{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-}
-
-.effectBtn{
-    padding:10px;
-    font-size:14px;
-    background:#2b2b2b;
-    color:white;
-    border:1px solid rgba(255,255,255,0.2);
-    cursor:pointer;
-    width:100%;
-}
-
-.effectBtn.active{
-    outline:2px solid rgba(255,255,255,0.55);
-}
-
-.preview{
-    flex:1;
-    position:relative;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:0 18px;
-    box-sizing:border-box;
-}
-
-.wordFrame{
-    width:100%;
-    display:flex;
-    justify-content:center;
-}
-
-.fxOuter, .fxInner{
-    display:inline-block;
-}
-
-input{
-    padding:10px;
-    font-size:18px;
-    background:#222;
-    border:2px solid white;
-    color:white;
-}
-button{
-    padding:10px;
-    font-size:16px;
-    background:#444;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-h1{
-    font-size:72px;
-    text-align:center;
-    transition:color 0.3s linear, text-shadow 0.3s linear;
-    will-change:transform, filter, opacity;
-}
-.hidden{display:none;}
-input[type=range]{width:100%;}
-.glow{
-    text-shadow:
-    0 0 5px currentColor,
-    0 0 10px currentColor,
-    0 0 20px currentColor;
-}
-
-.softGlow{
-    text-shadow:
-    0 0 2px currentColor,
-    0 0 6px currentColor;
-}
-
-.effect-none{filter:none;}
-
-@keyframes glitch{
-    0%{transform:translate(0)}
-    20%{transform:translate(-8px,8px)}
-    40%{transform:translate(8px,-8px)}
-    60%{transform:translate(-4px,4px)}
-    80%{transform:translate(4px,-8px)}
-    100%{transform:translate(0)}
-}
-
-@keyframes shake{
-    0%{transform:translate(0,0) rotate(0deg)}
-    20%{transform:translate(-8px,4px) rotate(-4deg)}
-    40%{transform:translate(8px,-4px) rotate(4deg)}
-    60%{transform:translate(-8px,-4px) rotate(0deg)}
-    80%{transform:translate(8px,4px) rotate(4deg)}
-    100%{transform:translate(0,0) rotate(0deg)}
-}
-
-@keyframes bounce{
-    0%,100%{transform:translateY(0)}
-    50%{transform:translateY(-32px)}
-}
-
-@keyframes pulse{
-    0%,100%{transform:scale(1)}
-    50%{transform:scale(1.2)}
-}
-
-@keyframes wobble{
-    0%,100%{transform:rotate(0deg)}
-    25%{transform:rotate(5deg)}
-    50%{transform:rotate(-5deg)}
-    75%{transform:rotate(3deg)}
-}
-
-@keyframes flicker{
-    0%{opacity:1}
-    5%{opacity:0.85}
-    10%{opacity:1}
-    15%{opacity:0.65}
-    20%{opacity:1}
-    55%{opacity:0.9}
-    60%{opacity:1}
-    100%{opacity:1}
-}
-
-@keyframes blurInOut{
-    0%,100%{filter:blur(0px)}
-    50%{filter:blur(4px)}
-}
-
-@keyframes zoom{
-    0%,100%{transform:scale(1)}
-    50%{transform:scale(1.3)}
-}
-
-@keyframes swing{
-    0%,100%{transform:rotate(0deg)}
-    50%{transform:rotate(12deg)}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Effect Preview</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="layout">
+        <div class="sidebar" id="sidebarLeft">
+            <div class="panel" id="setupPanel">
+                <div class="panelTitle">Phrase</div>
+                <input id="wordInput" type="text" placeholder="Enter a phrase (e.g. i dont want study)">
+                <button onclick="start()">Start</button>
+            </div>
 
-<div class="layout">
-    <div class="sidebar" id="sidebarLeft">
-        <div class="panel" id="setupPanel">
-            <div class="panelTitle">Phrase</div>
-            <input id="wordInput" placeholder="Enter a phrase (e.g. i dont want study)" onkeydown="if(event.key==='Enter') start()">
-            <button onclick="start()">Start</button>
+            <div class="panel hidden" id="controls">
+                <div class="panelTitle">Speed</div>
+                <div class="control-label">
+                    <span>Speed:</span>
+                    <span id="speedLabel">300</span>ms
+                </div>
+                <input type="range" min="50" max="1000" step="25" value="300" id="speed">
+
+                <div class="panelTitle">Sound</div>
+                <div class="control-label">
+                    <span>Volume:</span>
+                    <span id="volumeLabel">60</span>%
+                </div>
+                <input type="range" min="0" max="100" step="1" value="100" id="volume">
+
+                <button onclick="pause()">Pause / Resume</button>
+                <button onclick="fullscreen()">Fullscreen</button>
+                <button onclick="reset()">Reset</button>
+            </div>
         </div>
 
-        <div class="panel hidden" id="controls">
-            <div class="panelTitle">Speed</div>
-            <div style="font-size:13px; opacity:0.9;">Speed: <span id="speedLabel">300</span> ms</div>
-            <input type="range" min="50" max="1000" step="50" value="300" id="speed" oninput="updateSpeed()">
-
-            <div class="panelTitle">Sound</div>
-            <div style="font-size:13px; opacity:0.9;">Volume: <span id="volumeLabel">60</span>%</div>
-            <input type="range" min="0" max="100" step="1" value="60" id="volume" oninput="updateVolume()">
-
-            <button onclick="pause()">Pause / Resume</button>
-            <button onclick="fullscreen()">Fullscreen</button>
-            <button onclick="reset()">Reset</button>
-        </div>
-    </div>
-
-    <div class="preview" id="preview">
-        <div class="wordFrame" id="wordFrame">
-            <div class="fxOuter" id="fxOuter">
-                <div class="fxInner" id="fxInner">
-                    <h1 id="word" class="hidden glow effect-none"></h1>
+        <div class="preview" id="preview">
+            <div class="wordFrame" id="wordFrame">
+                <div class="fxOuter" id="fxOuter">
+                    <div class="fxInner" id="fxInner">
+                        <h1 id="word" class="hidden glow effect-none"></h1>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="sidebar sidebarRight hidden" id="sidebarRight">
-        <div class="panel">
-            <div class="panelTitle">Effects</div>
-            <div class="effects" id="effects">
-                <button class="effectBtn active" data-effect="none" onclick="clearEffects()">None</button>
-                <button class="effectBtn" data-effect="glitch" onclick="toggleEffect('glitch')">Glitch</button>
-                <button class="effectBtn" data-effect="shake" onclick="toggleEffect('shake')">Shake</button>
-                <button class="effectBtn" data-effect="bounce" onclick="toggleEffect('bounce')">Bounce</button>
-                <button class="effectBtn" data-effect="pulse" onclick="toggleEffect('pulse')">Pulse</button>
-                <button class="effectBtn" data-effect="wobble" onclick="toggleEffect('wobble')">Wobble</button>
-                <button class="effectBtn" data-effect="flicker" onclick="toggleEffect('flicker')">Flicker</button>
-                <button class="effectBtn" data-effect="blur" onclick="toggleEffect('blur')">Blur</button>
-                <button class="effectBtn" data-effect="zoom" onclick="toggleEffect('zoom')">Zoom</button>
-                <button class="effectBtn" data-effect="swing" onclick="toggleEffect('swing')">Swing</button>
+        <div class="sidebar sidebarRight hidden" id="sidebarRight">
+            <div class="panel">
+                <div class="panelTitle">Effects</div>
+                <div class="effects" id="effects">
+                    <button class="effectBtn active" data-effect="none" onclick="clearEffects()">None</button>
+                    <button class="effectBtn" data-effect="glitch" onclick="toggleEffect('glitch')">Glitch</button>
+                    <button class="effectBtn" data-effect="shake" onclick="toggleEffect('shake')">Shake</button>
+                    <button class="effectBtn" data-effect="bounce" onclick="toggleEffect('bounce')">Bounce</button>
+                    <button class="effectBtn" data-effect="pulse" onclick="toggleEffect('pulse')">Pulse</button>
+                    <button class="effectBtn" data-effect="wobble" onclick="toggleEffect('wobble')">Wobble</button>
+                    <button class="effectBtn" data-effect="flicker" onclick="toggleEffect('flicker')">Flicker</button>
+                    <button class="effectBtn" data-effect="blur" onclick="toggleEffect('blur')">Blur</button>
+                    <button class="effectBtn" data-effect="zoom" onclick="toggleEffect('zoom')">Zoom</button>
+                    <button class="effectBtn" data-effect="swing" onclick="toggleEffect('swing')">Swing</button>
+                    <button class="effectBtn" data-effect="spin" onclick="toggleEffect('spin')">Spin</button>
+                    <button class="effectBtn" data-effect="float" onclick="toggleEffect('float')">Float</button>
+                    <button class="effectBtn" data-effect="wave" onclick="toggleEffect('wave')">Wave</button>
+                    <button class="effectBtn" data-effect="rainbow" onclick="toggleEffect('rainbow')">Rainbow</button>
+                    <button class="effectBtn" data-effect="neon" onclick="toggleEffect('neon')">Neon</button>
+                    <button class="effectBtn" data-effect="elastic" onclick="toggleEffect('elastic')">Elastic</button>
+                    <button class="effectBtn" data-effect="rotate3d" onclick="toggleEffect('rotate3d')">3D Rotate</button>
+                    <button class="effectBtn" data-effect="gradient" onclick="toggleEffect('gradient')">Gradient</button>
+                </div>
+            </div>
+            
+            <div class="panel" id="effectControls" style="display: none;">
+                <div class="panelTitle">Effect Controls</div>
             </div>
         </div>
     </div>
-</div>
 
-<audio id="music">
-    <source src="audio/music.mp3" type="audio/mpeg">
-</audio>
+    <audio id="music" preload="auto">
+        <source src="audio/music.mp3" type="audio/mpeg">
+    </audio>
 
-<script>
-let words=[];
-let index=0;
-let speed=500;
-let paused=false;
-let interval;
-const selectedEffects=new Set();
-
-const playlist=[
-    'audio/music.mp3'
-];
-let trackIndex=0;
-
-const effectAnimations={
-    glitch: 'glitch 0.15s infinite',
-    shake: 'shake 0.35s infinite linear',
-    bounce: 'bounce 0.9s infinite ease-in-out',
-    pulse: 'pulse 0.95s infinite ease-in-out',
-    wobble: 'wobble 1.1s infinite ease-in-out',
-    flicker: 'flicker 1.3s infinite linear',
-    blur: 'blurInOut 1.4s infinite ease-in-out',
-    zoom: 'zoom 0.9s infinite ease-in-out',
-    swing: 'swing 1.2s infinite ease-in-out'
-};
-
-const transformEffects=new Set(['glitch','shake','bounce','pulse','wobble','zoom','swing']);
-const textOnlyEffects=new Set(['flicker','blur']);
-
-function start(){
-    const input=document.getElementById('wordInput').value.trim();
-    const phrase=(input ? input : "i don't want to study").replace(/\s+/g,' ').trim();
-    words=phrase.split(' ');
-    words.push(phrase);
-    document.getElementById('setupPanel').classList.add('hidden');
-    document.getElementById('controls').classList.remove('hidden');
-    document.getElementById('sidebarRight').classList.remove('hidden');
-    document.getElementById('word').classList.remove('hidden');
-    speed=document.getElementById('speed').value;
-    document.getElementById('speedLabel').textContent=speed;
-    updateVolume();
-    const music=document.getElementById('music');
-    if(music){
-        if(playlist.length){
-            trackIndex=0;
-            music.src=playlist[trackIndex];
-        }
-        music.onended=()=>{
-            if(!playlist.length) return;
-            trackIndex=(trackIndex+1)%playlist.length;
-            music.src=playlist[trackIndex];
-            music.play();
-        };
-        music.play();
-    }
-    run();
-}
-
-function run(){
-    clearInterval(interval);
-    interval=setInterval(()=>{
-        if(paused)return;
-        const bg=randomColor();
-        document.body.style.background=gradient(bg);
-        const text=invert(bg);
-        const w=document.getElementById('word');
-        w.textContent=words[index%words.length];
-        w.style.color=text;
-
-        // Keep animations applied even as text updates.
-        applyEffects();
-        index++;
-    },speed);
-}
-
-function updateSpeed(){
-    speed=document.getElementById('speed').value;
-    document.getElementById('speedLabel').textContent=speed;
-    run();
-}
-
-function pause(){paused=!paused;}
-function reset(){location.reload();}
-
-function fullscreen(){
-    if(document.documentElement.requestFullscreen)
-        document.documentElement.requestFullscreen();
-}
-
-function randomColor(){
-    return `rgb(${r()},${r()},${r()})`;
-}
-function invert(rgb){
-    const n=rgb.match(/\d+/g).map(Number);
-    return `rgb(${255-n[0]},${255-n[1]},${255-n[2]})`;
-}
-function gradient(rgb){
-    return `radial-gradient(circle, ${rgb}, black)`;
-}
-function r(){return Math.floor(Math.random()*256);}
-
-function updateVolume(){
-    const music=document.getElementById('music');
-    const volEl=document.getElementById('volume');
-    if(!music || !volEl) return;
-    const vol=Number(volEl.value);
-    music.volume=Math.max(0, Math.min(1, vol/100));
-    const label=document.getElementById('volumeLabel');
-    if(label) label.textContent=String(vol);
-}
-
-function toggleEffect(effect){
-    if(selectedEffects.has(effect)) selectedEffects.delete(effect);
-    else selectedEffects.add(effect);
-    applyEffects();
-}
-
-function clearEffects(){
-    selectedEffects.clear();
-    applyEffects();
-}
-
-function applyEffects(){
-    const w=document.getElementById('word');
-    const fxOuter=document.getElementById('fxOuter');
-    const fxInner=document.getElementById('fxInner');
-    if(!w || !fxOuter || !fxInner) return;
-
-    // Browsers don't combine multiple transform animations on one element well.
-    // To make effects work together, apply up to TWO transform-based effects across nested wrappers.
-    const transformList=[];
-    const textList=[];
-
-    selectedEffects.forEach(e=>{
-        if(transformEffects.has(e)) transformList.push(e);
-        else if(textOnlyEffects.has(e)) textList.push(e);
-    });
-
-    const outerAnim=[];
-    const innerAnim=[];
-    const textAnim=[];
-
-    if(transformList[0] && effectAnimations[transformList[0]]) outerAnim.push(effectAnimations[transformList[0]]);
-    if(transformList[1] && effectAnimations[transformList[1]]) innerAnim.push(effectAnimations[transformList[1]]);
-
-    textList.forEach(e=>{
-        const a=effectAnimations[e];
-        if(a) textAnim.push(a);
-    });
-
-    fxOuter.style.animation = outerAnim.length ? outerAnim.join(', ') : 'none';
-    fxInner.style.animation = innerAnim.length ? innerAnim.join(', ') : 'none';
-    w.style.animation = textAnim.length ? textAnim.join(', ') : 'none';
-
-    const buttons=document.querySelectorAll('#effects .effectBtn');
-    buttons.forEach(b=>{
-        const eff=b.dataset.effect;
-        if(eff==='none'){
-            b.classList.toggle('active', selectedEffects.size===0);
-        }else{
-            b.classList.toggle('active', selectedEffects.has(eff));
-        }
-    });
-}
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
