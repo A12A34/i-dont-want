@@ -41,6 +41,8 @@
                 <div class="fxOuter" id="fxOuter">
                     <div class="fxInner" id="fxInner">
                         <h1 id="word" class="hidden glow effect-none"></h1>
+                        <!-- Hidden text element for future use if needed -->
+                        <span id="hiddenText" class="hidden"></span>
                     </div>
                 </div>
             </div>
@@ -73,6 +75,56 @@
             
             <div class="panel" id="effectControls" style="display: none;">
                 <div class="panelTitle">Effect Controls</div>
+            </div>
+
+            <div class="panel" id="backgroundControls">
+                <div class="panelTitle">Background</div>
+                <label class="control-label" for="bgMode">
+                    <span>Mode</span>
+                </label>
+                <select id="bgMode">
+                    <option value="random" selected>Random Colors</option>
+                    <option value="solid">Solid Color</option>
+                    <option value="image">Image</option>
+                </select>
+
+                <div id="bgColorRow">
+                    <label class="control-label" for="bgColor">
+                        <span>Color</span>
+                    </label>
+                    <input type="color" id="bgColor" value="#000000">
+                </div>
+
+                <div id="bgImageRow" class="hidden">
+                    <label class="control-label" for="bgImage">
+                        <span>Background Image</span>
+                    </label>
+                    <input type="file" id="bgImage" accept="image/*">
+                </div>
+            </div>
+
+            <div class="panel" id="textExportControls">
+                <div class="panelTitle">Text & Export</div>
+
+                <label class="control-label" for="fontSelect">
+                    <span>Font</span>
+                </label>
+                <select id="fontSelect">
+                    <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Default</option>
+                    <option value="'Arial Black', Gadget, sans-serif">Arial Black</option>
+                    <option value="'Impact', Charcoal, sans-serif">Impact</option>
+                    <option value="'Courier New', Courier, monospace">Courier New</option>
+                    <option value="'Georgia', 'Times New Roman', serif">Georgia</option>
+                    <option value="'Comic Sans MS', cursive, sans-serif">Comic</option>
+                </select>
+
+                <input id="customFontInput" type="text" placeholder="Or type custom font-family CSS">
+                <button id="applyFontBtn" type="button">Apply Font</button>
+
+                <button id="exportBtn" type="button">Record Video</button>
+                <div id="exportNote" class="export-note">
+                    Exports a WebM video of this tab (visual only). Use Chrome for best results.
+                </div>
             </div>
         </div>
     </div>

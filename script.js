@@ -8,7 +8,15 @@ const state = {
     selectedEffects: new Set(),
     trackIndex: 0,
     isPlaying: false,
-    effectSettings: {} // Store settings for each effect
+    effectSettings: {}, // Store settings for each effect
+    // Background & font settings
+    backgroundMode: 'random', // 'random' | 'solid' | 'image'
+    backgroundColor: '#000000',
+    backgroundImage: null,
+    // Recording
+    recorder: null,
+    recordedChunks: [],
+    isRecording: false
 };
 
 // Audio Playlist
@@ -97,7 +105,16 @@ const elements = {
     volumeLabel: null,
     music: null,
     effects: null,
-    effectControls: null
+    effectControls: null,
+    // Background controls
+    bgMode: null,
+    bgColor: null,
+    bgImage: null,
+    // Font & export
+    fontSelect: null,
+    customFontInput: null,
+    applyFontBtn: null,
+    exportBtn: null
 };
 
 // Initialize effect settings
@@ -148,6 +165,15 @@ function initElements() {
     elements.music = document.getElementById('music');
     elements.effects = document.getElementById('effects');
     elements.effectControls = document.getElementById('effectControls');
+    // Background
+    elements.bgMode = document.getElementById('bgMode');
+    elements.bgColor = document.getElementById('bgColor');
+    elements.bgImage = document.getElementById('bgImage');
+    // Font & export
+    elements.fontSelect = document.getElementById('fontSelect');
+    elements.customFontInput = document.getElementById('customFontInput');
+    elements.applyFontBtn = document.getElementById('applyFontBtn');
+    elements.exportBtn = document.getElementById('exportBtn');
 }
 
 // Initialize event listeners
@@ -166,6 +192,30 @@ function initEventListeners() {
 
     if (elements.volume) {
         elements.volume.addEventListener('input', updateVolume);
+    }
+
+    // Background controls
+    if (elements.bgMode) {
+        elements.bgMode.addEventListener('change', handleBackgroundModeChange);
+    }
+    if (elements.bgColor) {
+        elements.bgColor.addEventListener('input', handleBackgroundColorChange);
+    }
+    if (elements.bgImage) {
+        elements.bgImage.addEventListener('change', handleBackgroundImageChange);
+    }
+
+    // Font controls
+    if (elements.fontSelect) {
+        elements.fontSelect.addEventListener('change', applyFont);
+    }
+    if (elements.applyFontBtn) {
+        elements.applyFontBtn.addEventListener('click', applyFont);
+    }
+
+    // Export / recording
+    if (elements.exportBtn) {
+        elements.exportBtn.addEventListener('click', toggleRecording);
     }
 
     // Keyboard shortcuts
@@ -367,13 +417,40 @@ function run() {
 
 // Update the display
 function updateDisplay() {
-    const bg = randomColor();
-    document.body.style.background = gradient(bg);
-    
-    const text = invert(bg);
+    // Background handling
+    let baseColor = null;
+
+    if (state.backgroundMode === 'image' && state.backgroundImage) {
+        document.body.style.backgroundImage = `url(${state.backgroundImage})`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundColor = '#000000';
+    } else {
+        document.body.style.backgroundImage = 'none';
+
+        if (state.backgroundMode === 'solid') {
+            // Use chosen solid color and invert it for text
+            baseColor = state.backgroundColor || '#000000';
+            document.body.style.background = baseColor;
+        } else {
+            // random mode – keep cycling through all colors
+            baseColor = randomColor();
+            document.body.style.background = gradient(baseColor);
+        }
+    }
+
     if (elements.word) {
         elements.word.textContent = state.words[state.index % state.words.length];
-        elements.word.style.color = text;
+
+        // Text color: exact inverse of the background base color when we have one
+        if (baseColor) {
+            elements.word.style.color = invert(baseColor);
+        } else {
+            // For image backgrounds we keep a simple white text for readability
+            elements.word.style.color = '#ffffff';
+        }
+
         applyEffects();
     }
 }
@@ -453,6 +530,131 @@ function gradient(rgb) {
 
 function r() {
     return Math.floor(Math.random() * 256);
+}
+
+// Background controls handlers
+function handleBackgroundModeChange() {
+    if (!elements.bgMode) return;
+    state.backgroundMode = elements.bgMode.value || 'random';
+
+    const colorRow = document.getElementById('bgColorRow');
+    const imageRow = document.getElementById('bgImageRow');
+
+    if (colorRow) {
+        colorRow.classList.toggle('hidden', state.backgroundMode !== 'solid');
+    }
+    if (imageRow) {
+        imageRow.classList.toggle('hidden', state.backgroundMode !== 'image');
+    }
+
+    // Apply immediately
+    updateDisplay();
+}
+
+function handleBackgroundColorChange() {
+    if (!elements.bgColor) return;
+    state.backgroundColor = elements.bgColor.value || '#000000';
+    if (state.backgroundMode === 'solid') {
+        updateDisplay();
+    }
+}
+
+function handleBackgroundImageChange(event) {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        state.backgroundImage = e.target?.result || null;
+        if (state.backgroundMode === 'image') {
+            updateDisplay();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Font controls
+function applyFont() {
+    if (!elements.word) return;
+    let fontFamily = elements.fontSelect?.value;
+    const custom = elements.customFontInput?.value.trim();
+
+    if (custom) {
+        fontFamily = custom;
+    }
+
+    if (fontFamily) {
+        elements.word.style.fontFamily = fontFamily;
+    }
+}
+
+// Recording / export
+function updateExportButton() {
+    if (!elements.exportBtn) return;
+    elements.exportBtn.textContent = state.isRecording ? 'Stop & Download Video' : 'Record Video';
+}
+
+function startRecording() {
+    if (state.isRecording) return;
+
+    const captureTarget = document.documentElement;
+    if (!captureTarget || typeof captureTarget.captureStream !== 'function') {
+        alert('Recording is not supported in this browser. Try using built-in screen recording.');
+        return;
+    }
+
+    const stream = captureTarget.captureStream(30); // 30fps
+
+    try {
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        state.recorder = recorder;
+        state.recordedChunks = [];
+
+        recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+                state.recordedChunks.push(e.data);
+            }
+        };
+
+        recorder.onstop = () => {
+            if (!state.recordedChunks.length) return;
+            const blob = new Blob(state.recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'word-effect.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        };
+
+        recorder.start();
+        state.isRecording = true;
+        updateExportButton();
+    } catch (err) {
+        console.warn('Recording error:', err);
+        alert('Unable to start recording in this browser.');
+    }
+}
+
+function stopRecording() {
+    if (!state.recorder || !state.isRecording) return;
+    try {
+        state.recorder.stop();
+    } catch (err) {
+        console.warn('Error stopping recorder:', err);
+    }
+    state.isRecording = false;
+    updateExportButton();
+}
+
+function toggleRecording() {
+    if (state.isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
 }
 
 // Effect management
